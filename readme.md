@@ -1,1 +1,1 @@
-this is deploy and rollback shell's script.
+all kinds of shell scripts.
