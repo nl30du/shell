@@ -323,7 +323,7 @@ main() {
       else
          outproject 0
          read -p "which one is your choice(1,2...):" YO
-         listfunc $YO ny
+         listfunc $YO ny $1
       fi
    elif [ -z "${DUBBO_PATH_LIST}" -a -n "${WEB_PROJECT}" ];then   
       #backfunc ${dubbo_pro_list[$1-1]} ${dubbo_path_list[$1-1]}
