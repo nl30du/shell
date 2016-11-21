@@ -1,9 +1,9 @@
+
 #!/bin/bash
 # chkconfig: - 96 14
 # description: Tht Apache Tomcat Servlet/JSP container.
 #
 source /etc/profile
-
 if [ -z "$JAVACMD" ] ; then
   if [ -n "$JAVA_HOME"  ] ; then
       JAVACMD="$JAVA_HOME/bin/java"
@@ -11,51 +11,39 @@ if [ -z "$JAVACMD" ] ; then
     JAVACMD=`which java`
   fi
 fi
-
 if [ ! -x "$JAVACMD" ] ; then
   echo "Error: JAVA_HOME is not defined correctly."
   echo "  We cannot execute $JAVACMD"
   exit 1
 fi
-
-project_name=dock_web
-
+project_name=dock_web #此处修改项目的工程名/data/webapps/下
 export LOGDIR=/data/logs
 export CATALINA_OUT=${LOGDIR}/catalina.out
 export CATALINA_BASE=/data/project/$project_name
 export CATALINA_HOME=/usr/local/tomcat
-export APP_START_OPTS="-Ddisconf.app=dock-web -Ddisconf.env=stage -Ddisconf.version=1_0_0 -Ddisconf.enable.remote.conf=true -Ddisconf.conf_server_host=10.0.18.23 -Ddisconf.user_define_download_dir=/data/webapps/disconf/download"
+#dock-web根据需要改成特定项目名称， -Ddisconf.env=改成当前执行的环境， -Ddisconf.conf_server_host=改为对应环境disconf的ip
+export APP_START_OPTS="-Ddisconf.app=dock-web -Ddisconf.env=stage -Ddisconf.version=1_0_0 -Ddisconf.enable.remote.conf=true -Ddisconf.conf_server_host=10.0.18.23 -Ddisconf.user_define_download_dir=/data/conf/$project_name/disconf/download"
 export JAVA_OPTS="-server -Xms2G -Xmx2G -Xss512k  -Dfile.encoding=UTF-8 -Djava.awt.headless=true -Dsun.net.client.defaultConnectTimeout=60000 -Dsun.net.client.defaultReadTimeout=60000 -Djmagick.systemclassloader=no -Dnetworkaddress.cache.ttl=300 -Dsun.net.inetaddr.ttl=300 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath= -XX:ErrorFile=${CATALINA_BASE}/logs/java_error_%p.logi $APP_START_OPTS"
 STARTUP=$CATALINA_HOME/bin/startup.sh
 SHUTDOWN=$CATALINA_HOME/bin/shutdown.sh
-
-
-case $1 in 
+if [ ! -d /data/conf/$project_name/disconf/download ];then
+   mkdir /data/conf/$project_name/disconf/download -p
+   chown -R tomcat.tomcat /data/conf/ &> /dev/null
+fi
+  
+case $1 in
 start)
-#   result=$(ps -ef |grep "$project_name" |  grep -v grep &>/dev/null)
-#   if [ -n "$result" ];then
-#   #if ps -ef |grep /data/service/wms-stockin-api |  grep -v grep &>/dev/null;then
-#       echo -e "\033[0;31;2mWaring:\\t\t$prog has been start\033[0m"
-#       #ps -ef |grep /usr/local/tomcat |  grep -v grep |awk '{print $2}' | xargs kill -9
-#   else
-#       echo -n "Starting $prog: "
-#       su tomcat -s /bin/bash $STARTUP 
-#   fi
-#   ;;
    result=$(ps -ef |grep "$project_name" |  grep -v grep &>/dev/null)
    if [ -n "$result" ];then
-   #if ps -ef |grep /data/service/wms-stockin-api |  grep -v grep &>/dev/null;then
        echo -e "\033[0;31;2mWaring:\\t\t$prog has been start\033[0m"
-       #ps -ef |grep /usr/local/tomcat |  grep -v grep |awk '{print $2}' | xargs kill -9
    else
        echo -n "Starting $prog: "
-       #su tomcat -s
         if [ $UID -eq 0 ];then
             su tomcat -s /bin/bash $STARTUP
         elif [ `whoami` == "tomcat" ];then
             /bin/bash $STARTUP
         else
-            echo "Please use tomcat or root start tomcat service"
+            echo "Please start the project with root or tomcat."
         fi
    fi
    ;;
@@ -73,5 +61,4 @@ stop)
    echo "Usage: tomcat [start|stop|reload|restart]"
    exit 1
 esac
-exit 0 
-
+exit 0
