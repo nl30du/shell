@@ -4,7 +4,7 @@
 
 #Defined variables
 
-CONF="dubbo.properties  jdbc.properties  logback.xml  system.properties"
+CONF="dubbo.properties  jdbc.properties  logback.xml  system.properties redis.properties"
 
 if [ -d /data/webapps/ ];then
   START_PATH=`find /data/webapps/ -type d -name "WEB-INF"| sed 's@\(.*\)WEB-INF@\1@g'`
@@ -67,22 +67,3 @@ bash /home/tomcat/ktail.sh &
 sleep 1
 rm -rf /home/tomcat/{check.log,ktail.sh}
 echo "the deploy is done."
-
-
-
-
-
-
-
-
-
-##
-#!/bin/bash
-while true;do
-   sleep 1
-   check=`netstat -tlnp | grep java | grep 20[0-9][0-9][0-9]`
-   [[ -n $check ]] && netstat -tlnp && exit 0
-done
-
-
-##

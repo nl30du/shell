@@ -26,34 +26,28 @@ project_name=dock_service #此处修改为项目的名字
 dubbo_path=/data/dubbo/
 CONF_DIR=$dubbo_path$project_name/conf
 LIB_DIR=$dubbo_path$project_name/lib
+LOGS_DIR=/data/logs
 #JAVA_OPTS=" -server -Xms512m -Xmx512m"
 JAVA_OPTS="-server -Xms2G -Xmx2G -Xss256K -XX:PermSize=128M -XX:MaxPermSize=256M -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled -XX:+UseCMSCompactAtFullCollection -XX:+DisableExplicitGC -XX:+PrintGCDetails -Xloggc:${LOGS_DIR}/gc.log -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${LOGS_DIR}/common_service.dump -Djava.net.preferIPv4Stack=true"
 LIB_JARS=`ls ${LIB_DIR} | grep .jar | awk '{print "'${LIB_DIR}'/"$0}' | tr "\n" ":"`
 #log=`grep "dubbo.logback.file" ${CONF_DIR}/dubbo.properties | awk -F= '{print $2}'`
 STDOUT_FILE=/data/logs/dock.log #此处需根据特定项目修改成要打印的启动日志文件，可以写死。
  
-#dock-service根据需要改成特定项目名称， -Ddisconf.env=改成当前执行的环境， -Ddisconf.conf_server_host=改为对应环境disconf的ip
-APP_START_OPTS="-Ddisconf.app=dock-service -Ddisconf.env=demo -Ddisconf.version=1_0_0 -Ddisconf.enable.remote.conf=true -Ddisconf.conf_server_host=10.0.18.23 -Ddisconf.user_define_download_dir=/data/conf/$project_name/disconf/download"
-if [ ! -d /data/conf/$project_name/disconf/download ];then
-   mkdir /data/conf/$project_name/disconf/download -p
-   chown -R dubbo.dubbo /data/conf/ &> /dev/null
-fi
-
 startup() {
    if [ $UID -eq 0 ];then
-     su - dubbo -c "$JAVACMD ${JAVA_OPTS} ${APP_START_OPTS} -classpath ${CONF_DIR}:${LIB_JARS} com.alibaba.dubbo.container.Main $* > ${STDOUT_FILE} 2>&1 &"
+     su - dubbo -c "$JAVACMD ${JAVA_OPTS} -classpath ${CONF_DIR}:${LIB_JARS} com.alibaba.dubbo.container.Main $* > ${STDOUT_FILE} 2>&1 &"
    elif [ `whoami` == "dubbo" ];then
-     $JAVACMD ${JAVA_OPTS} ${APP_START_OPTS} -classpath ${CONF_DIR}:${LIB_JARS} com.alibaba.dubbo.container.Main $* > ${STDOUT_FILE} 2>&1 &
+     $JAVACMD ${JAVA_OPTS} -classpath ${CONF_DIR}:${LIB_JARS} com.alibaba.dubbo.container.Main $* > ${STDOUT_FILE} 2>&1 &
    else
      echo "Please use dubbo or root start dubbo service"
    fi
 }
-
 #functions
 start() {
    local PIDS=`ps -ef | grep ${project_name} | grep -v grep | grep java | awk '{print $2}'`
    if [ -n "$PIDS" ]; then
      echo "ERROR: The ${project_name} is running!"
+     #exit 1
    else
      echo -ne "Starting ${project_name}\r"
      startup

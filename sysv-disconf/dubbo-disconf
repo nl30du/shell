@@ -26,6 +26,7 @@ project_name=dock_service #此处修改为项目的名字
 dubbo_path=/data/dubbo/
 CONF_DIR=$dubbo_path$project_name/conf
 LIB_DIR=$dubbo_path$project_name/lib
+LOGS_DIR=/data/logs
 #JAVA_OPTS=" -server -Xms512m -Xmx512m"
 JAVA_OPTS="-server -Xms2G -Xmx2G -Xss256K -XX:PermSize=128M -XX:MaxPermSize=256M -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled -XX:+UseCMSCompactAtFullCollection -XX:+DisableExplicitGC -XX:+PrintGCDetails -Xloggc:${LOGS_DIR}/gc.log -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${LOGS_DIR}/common_service.dump -Djava.net.preferIPv4Stack=true"
 LIB_JARS=`ls ${LIB_DIR} | grep .jar | awk '{print "'${LIB_DIR}'/"$0}' | tr "\n" ":"`
