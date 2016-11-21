@@ -1,0 +1,104 @@
+#!/bin/bash
+# chkconfig: - 96 14
+# description: The Dubbo Service Script,running by dubbo user.
+# verson:1.3
+
+#java path
+source /etc/profile
+
+if [ -z "$JAVACMD" ] ; then
+  if [ -n "$JAVA_HOME"  ] ; then
+    JAVACMD="$JAVA_HOME/bin/java"
+  else
+    JAVACMD=`which java`
+  fi
+fi
+
+if [ ! -x "$JAVACMD" ] ; then
+  echo "Error: JAVA_HOME is not defined correctly."
+  echo "  We cannot execute $JAVACMD"
+  exit 1
+fi
+#######config by yourself,the dubbo's install directory,the dubbo's project directory. 
+dubbo_path=/data/dubbo/
+project_name=sku-service
+#######################
+CONF_DIR=$dubbo_path$project_name/conf
+LIB_DIR=$dubbo_path$project_name/lib
+LOGS_DIR=/data/logs
+JAVA_OPTS="-server -Xms2G -Xmx2G -Xss256K -XX:PermSize=128M -XX:MaxPermSize=256M -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled -XX:+UseCMSCompactAtFullCollection -XX:+DisableExplicitGC -XX:+PrintGCDetails -Xloggc:$LOGS_DIR/gc.log -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$LOGS_DIR/common_service.dump -Djava.net.preferIPv4Stack=true"
+#JAVA_OPTS="-server -Xms512m -Xmx512m"
+LIB_JARS=`ls $LIB_DIR | grep .jar | awk '{print "'$LIB_DIR'/"$0}' | tr "\n" ":"`
+STDOUT_FILE=/data/`cat $dubbo_path$project_name/conf/dubbo.properties | grep -o "logs/$project_name\.log"`
+SERVER_NAME=$project_name
+PIDS=`ps -ef | grep $project_name | grep -v grep | awk '{print $2}'`
+#user,authority,owner
+id dubbo &> /dev/null || useradd dubbo &> /dev/null
+chown root.dubbo $LOGS_DIR/ &> /dev/null
+chmod 775 $LOGS_DIR/ &> /dev/null
+#functions
+startup() {
+  if [ $UID -eq 0 ];then
+     su - dubbo -c "$JAVACMD $JAVA_OPTS -classpath $CONF_DIR:$LIB_JARS com.alibaba.dubbo.container.Main $* &> $STDOUT_FILE &"
+  elif [ `whoami` == "dubbo" ];then
+     $JAVACMD $JAVA_OPTS -classpath $CONF_DIR:$LIB_JARS com.alibaba.dubbo.container.Main $* &> $STDOUT_FILE &
+  else
+     echo "Please use dubbo or root start dubbo service"
+  fi
+}
+stopdown() {
+#  PIDS=`ps -ef | grep sku | grep -v grep | awk '{print $2}'`
+  for PID in $PIDS ; do
+     kill $PID > /dev/null &> /dev/null
+  done
+
+  COUNT=0
+  while [ $COUNT -lt 1 ]; do
+     sleep 1
+     COUNT=1
+    for PID in $PIDS ; do
+        PID_EXIST=`ps -f -p $PID | grep java`
+        if [ -n "$PID_EXIST" ]; then
+            COUNT=0
+            break
+        fi
+    done
+  done
+
+#echo "OK!"
+#echo "PID: $PIDS" 
+}
+#
+#
+case $1 in
+start)
+   if [ -n "$PIDS" ]; then
+    echo "ERROR: The $SERVER_NAME is running!"
+    exit 1
+   fi
+   echo -e "Starting the $SERVER_NAME ..."
+   sleep 1
+   startup
+   PID1=`ps -ef | grep $project_name | grep -v grep | awk '{print $2}'`
+   if [ -n "$PID1"  ];then
+      echo "the $SERVER_NAME is on."
+   fi
+   ;;
+stop)
+   if [ -z "$PIDS" ]; then
+    echo "ERROR: The $SERVER_NAME does not started!"
+    exit 1
+   fi
+   echo -e "Stopping the $SERVER_NAME ..."
+   stopdown
+   if [ $?==0 ];then
+      echo "the $SERVER_NAME is down."
+   fi
+   ;;
+*)
+   echo "Usage: dubbo [start|stop]"
+   exit 1
+   ;;
+esac
+exit 0
+
