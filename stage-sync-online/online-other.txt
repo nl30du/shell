@@ -1,0 +1,1 @@
+trade_service:10.10.0.9:dubbo:trade-service
