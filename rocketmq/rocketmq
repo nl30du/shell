@@ -21,8 +21,7 @@ broker_pid=`netstat -tlnp | grep 'java' | grep "${broker_port}" | awk '{print $N
 
 check_process(){
    local port=$1
-   local swith=true
-   while ${switch};do
+   while true;do
      echo -n '.'
      usleep 500000
      local pid=`netstat -tlnp | grep 'java' | grep "${port}" | awk '{print $NF}' | awk -F/ '{print $1}'`
