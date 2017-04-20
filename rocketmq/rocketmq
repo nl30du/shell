@@ -1,0 +1,99 @@
+#!/bin/bash
+# chkconfig: - 97 03
+# description: The Rocketmq Service's Script.
+# version:1.0
+# author:tangcw
+
+export JAVA_HOME=/usr/local/jdk
+export ROCKETMQ_HOME=/usr/local/rocketmq
+#cd ${ROCKETMQ_HOME}/bin/ && source ./runserver.sh
+
+JAVACMD=${JAVA_HOME}/bin/java
+
+log_dir=${ROCKETMQ_HOME}/logs
+conf_file=${ROCKETMQ_HOME}/conf/2m-noslave/broker-a.properties
+namesrv_args='com.alibaba.rocketmq.namesrv.NamesrvStartup'
+broker_args="com.alibaba.rocketmq.broker.BrokerStartup -c ${conf_file}"
+namesrv_port=`cat ${conf_file} | grep 'namesrvAddr' | awk -F: '{print $NF}'`
+broker_port=`cat ${conf_file} | grep "listenPort" | awk -F= '{print $NF}'`
+namesrv_pid=`netstat -tlnp | grep 'java' | grep "${namesrv_port}" | awk '{print $NF}' | awk -F/ '{print $1}'`
+broker_pid=`netstat -tlnp | grep 'java' | grep "${broker_port}" | awk '{print $NF}' | awk -F/ '{print $1}'`
+
+check_process(){
+   local port=$1
+   local swith=true
+   while ${switch};do
+     echo -n '.'
+     usleep 500000
+     local pid=`netstat -tlnp | grep 'java' | grep "${port}" | awk '{print $NF}' | awk -F/ '{print $1}'`
+     if [ "$2" == "on" ];then
+       if [ -n "$pid" ];then
+         echo -n "OK"
+         echo ""
+         break
+       fi
+     elif [ "$2" == "off" ];then
+       if [ -z "$pid" ];then
+         echo -n "OK"
+         echo ""
+         break
+       fi
+     fi
+   done     
+}
+
+start_namesrv(){
+   echo -n "Starting namesrv...."    
+   cd ${ROCKETMQ_HOME}/bin/ && nohup bash runserver.sh ${namesrv_args} &> ${log_dir}/namesrv.log &
+   check_process ${namesrv_port} on
+}
+
+start_broker(){
+   echo -n "Starting broker...."
+   cd ${ROCKETMQ_HOME}/bin/ && nohup bash runserver.sh ${broker_args} &> ${log_dir}/broker.log &
+   check_process ${broker_port} on
+}
+
+stop_namesrv(){
+   echo -n "Stopping namesrv...."
+   cd ${ROCKETMQ_HOME}/bin/ && bash mqshutdown namesrv &> ${log_dir}/namesrv.log 
+   check_process ${namesrv_port} off
+}
+
+stop_broker(){
+   echo -n "Stopping broker...."
+   cd ${ROCKETMQ_HOME}/bin/ && bash mqshutdown broker &> ${log_dir}/broker.log
+   check_process ${broker_port} off
+}
+
+
+startup(){
+   [ -n "${namesrv_pid}" ] && echo "The Namesrv is running." || start_namesrv 
+   echo '-------------------------------------'
+   [ -n "${broker_pid}" ] && echo "The Broker is running" || start_broker
+}
+
+stopoff(){
+   [ -z "${broker_pid}" ] && echo "The Broker has stopped" || stop_broker
+   echo '-------------------------------------'
+   [ -z "${namesrv_pid}" ] && echo "The Namesrv has stopped." || stop_namesrv
+}
+
+
+
+case $1 in
+start)
+   startup || exit 2 
+   ;;
+stop)
+   stopoff || exit 3
+   ;;
+*)
+   echo "Usage: rocketmq [start|stop]"
+   exit 1
+   ;;
+esac
+exit 0
+
+
+
