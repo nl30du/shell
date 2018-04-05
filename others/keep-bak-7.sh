@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# author: Mr.Tang
 
 n=`ls -l /data/backup | grep 2017.*[0-9]$ | wc -l`
 if [ "$n" -gt 7 ];then
