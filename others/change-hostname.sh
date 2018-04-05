@@ -1,4 +1,8 @@
 #!/bin/bash
+# author: Mr.Yu
+
+
+
 #ip=$(ifconfig|awk '/10.0/ {print $2}'|awk -F":" '{print $2}' |awk -F "."  '{print $1"-"$2"-"$3"-"$4}')
 ip=$(ifconfig|awk '/10.0/ {print $2}'|awk -F":" '{print $2}' | head -1 | awk -F "."  '{print $1"-"$2"-"$3"-"$4}')
 asd=`ifconfig | grep "Bcast" |  awk -F: '{print $2}' | awk '{print $1}'`
