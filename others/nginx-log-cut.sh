@@ -1,5 +1,5 @@
 #!/bin/bash
-#
+# author: Mr.net
 file_name="appapi_access dock_access fhgc_access hqg_access master_mirror_access mfds_access nginx_error old-report_access pay_access pic_access product_access report_access reportcn_access settl_access sku_access supply_access support_access timer_access travel_access voucher_access yabyy_access"
 
 #nginx's log direcory
